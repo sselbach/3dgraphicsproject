@@ -323,7 +323,7 @@ def load(file, shader, tex_file=None, **params):
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
-    def __init__(self, width=640, height=480):
+    def __init__(self, width=640, height=480, trackball=None):
         super().__init__()
 
         # version hints: create GL window with >= OpenGL 3.3 and core profile
@@ -338,7 +338,10 @@ class Viewer(Node):
         glfw.make_context_current(self.win)
 
         # initialize trackball
-        self.trackball = Trackball()
+        if not trackball:
+            trackball = Trackball()
+
+        self.trackball = trackball
         self.mouse = (0, 0)
 
         # register event handlers
@@ -370,6 +373,7 @@ class Viewer(Node):
 
             # draw our scene objects
             cam_pos = np.linalg.inv(self.trackball.view_matrix())[:, 3]
+
             self.draw(view=self.trackball.view_matrix(),
                       projection=self.trackball.projection_matrix(win_size),
                       model=identity(),

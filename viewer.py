@@ -6,56 +6,39 @@ import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 from core import Shader, Viewer, Mesh, load
 from texture import Texture, Textured
+from transform import Trackball
 from procedural import ProceduralGround
 
 
-# -------------- Example textured plane class ---------------------------------
-class TexturedPlane(Textured):
-    """ Simple first textured object """
-    def __init__(self, shader, tex_file, tex_file_2):
-        # prepare texture modes cycling variables for interactive toggling
-        self.wraps = cycle([GL.GL_REPEAT, GL.GL_MIRRORED_REPEAT,
-                            GL.GL_CLAMP_TO_BORDER, GL.GL_CLAMP_TO_EDGE])
-        self.filters = cycle([(GL.GL_NEAREST, GL.GL_NEAREST),
-                              (GL.GL_LINEAR, GL.GL_LINEAR),
-                              (GL.GL_LINEAR, GL.GL_LINEAR_MIPMAP_LINEAR)])
-        self.wrap, self.filter = next(self.wraps), next(self.filters)
-        self.file = tex_file
-        self.file_2 = tex_file_2
+class Axis(Mesh):
+    """ Axis object useful for debugging coordinate frames """
+    def __init__(self, shader):
+        pos = ((0, 0, 0), (1, 0, 0), (0, 0, 0), (0, 1, 0), (0, 0, 0), (0, 0, 1))
+        col = ((1, 0, 0), (1, 0, 0), (0, 1, 0), (0, 1, 0), (0, 0, 1), (0, 0, 1))
+        super().__init__(shader, attributes=dict(position=pos, color=col))
 
-        # setup plane mesh to be textured
-        base_coords = ((-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0))
-        tex_coord = np.array(((0, 0), (0, 1), (1, 1), (1, 0)), np.float32)
-        normals = np.array(((0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)), np.float32)
-        scaled = 100 * np.array(base_coords, np.float32)
-        indices = np.array((0, 1, 2, 0, 2, 3), np.uint32)
-        mesh = Mesh(shader, attributes={"position": scaled, "normal": normals, "tex_coord": tex_coord}, index=indices)
+    def draw(self, primitives=GL.GL_LINES, **uniforms):
+        super().draw(primitives=primitives, **uniforms)
 
+class FixedCameraViewer(Viewer):
+    def on_mouse_move(self, win, xpos, ypos):
+        pass
 
-        # setup & upload texture to GPU, bind it to shader name 'diffuse_map'
-        texture_1 = Texture(tex_file, self.wrap, *self.filter)
-        texture_2 = Texture(tex_file_2, self.wrap, *self.filter)
-        super().__init__(mesh, diffuse_map=texture_1, flower_overlay=texture_2)
-
-    def key_handler(self, key):
-        # cycle through texture modes on keypress of F6 (wrap) or F7 (filtering)
-        self.wrap = next(self.wraps) if key == glfw.KEY_F6 else self.wrap
-        self.filter = next(self.filters) if key == glfw.KEY_F7 else self.filter
-        if key in (glfw.KEY_F6, glfw.KEY_F7):
-            texture = Texture(self.file, self.wrap, *self.filter)
-            texture_2 = Texture(self.file_2, self.wrap, *self.filter)
-            self.textures.update(diffuse_map=texture, flower_overlay=texture_2)
-
-
+    def on_scroll(self, win, _deltax, deltay):
+        pass
 # -------------- main program and scene setup --------------------------------
 def main():
     """ create a window, add scene objects, then run rendering loop """
-    viewer = Viewer()
+
+    trackball = Trackball(pitch=0, roll=60, yaw=90, distance=150)
+
+    viewer = FixedCameraViewer(trackball=trackball)
     shader = Shader("texture.vert", "texture.frag")
 
-    ground = ProceduralGround(shader, "grass.png", grid_size=10, amplitude=0.5)
+    ground = ProceduralGround(shader, "grass.png", grid_size=100, amplitude=10)
 
     viewer.add(ground)
+    viewer.add(Axis(shader))
     
     # start rendering loop
     viewer.run()
