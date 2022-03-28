@@ -6,6 +6,7 @@ import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 from core import Shader, Viewer, Mesh, load
 from texture import Texture, Textured
+from procedural import ProceduralGround
 
 
 # -------------- Example textured plane class ---------------------------------
@@ -52,13 +53,10 @@ def main():
     viewer = Viewer()
     shader = Shader("texture.vert", "texture.frag")
 
-    viewer.add(*[mesh for file in sys.argv[1:] for mesh in load(file, shader)])
+    ground = ProceduralGround(shader, "grass.png", grid_size=10, amplitude=0.5)
 
-    if len(sys.argv) != 2:
-        print('Usage:\n\t%s [3dfile]*\n\n3dfile\t\t the filename of a model in'
-              ' format supported by assimp.' % (sys.argv[0],))
-        viewer.add(TexturedPlane(shader, "grass.png", "flowers.png"))
-
+    viewer.add(ground)
+    
     # start rendering loop
     viewer.run()
 

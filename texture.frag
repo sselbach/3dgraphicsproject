@@ -18,7 +18,7 @@ void main() {
     vec3 texel = (texel_overlay.w > 0) ? texel_overlay.xyz : texel_diffuse.xyz;
     
     vec3 k_d = texel;
-    vec3 k_a = texel * 0.25;
+    vec3 k_a = texel * 0.75;
     vec3 k_s = vec3(1, 0.7, 0);
     vec3 light_dir = normalize(w_camera_position + vec3(0, 0, 0));
 
@@ -43,4 +43,6 @@ void main() {
     
     out_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
     //out_color = vec4(spec, 1);
+
+    //out_color = vec4(w_position, 1);
 }
