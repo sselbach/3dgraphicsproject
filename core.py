@@ -377,7 +377,8 @@ class Viewer(Node):
             self.draw(view=self.trackball.view_matrix(),
                       projection=self.trackball.projection_matrix(win_size),
                       model=identity(),
-                      w_camera_position=cam_pos)
+                      w_camera_position=cam_pos,
+                      timer=glfw.get_time())
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)

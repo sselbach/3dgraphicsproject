@@ -5,33 +5,26 @@ from perlin_numpy import generate_perlin_noise_2d
 
 from texture import Textured, Texture
 from core import Mesh
+from utils import displacement_to_normal_map
 
 from itertools import product
 
-class ProceduralGround(Textured):
-    def __init__(self, shader, tex_file, grid_size=10, amplitude=1):
-        self.wrap = GL.GL_REPEAT
-        self.filter = (GL.GL_NEAREST, GL.GL_NEAREST)
 
-        self.tex_file = tex_file
-
+class ProceduralGroundGPU(Textured):
+    def __init__(self, shader, tex_file, grid_size=100, amplitude=1):
         xx, yy = list(np.meshgrid(np.arange(grid_size, dtype=np.float32), np.arange(grid_size, dtype=np.float32)))
 
         xx -= grid_size / 2
         yy -= grid_size / 2
 
-        zz = np.random.normal(0, amplitude, size=(grid_size, grid_size))
-        zz = generate_perlin_noise_2d((grid_size, grid_size), (5, 5)) * amplitude
+        zz = np.zeros(xx.shape)
 
         grid = np.stack((xx, yy, zz)).reshape(3, grid_size**2).T
         grid = grid.astype(np.float32)
 
-        tex_coords = grid / grid_size
+        tex_coords = (grid / grid_size) - 0.5
         tex_coords = tex_coords[:, (0, 1)]
 
-        normals = np.zeros(grid.shape, dtype=np.float32)
-        normals[:, 2] = 1
-        
         index_list = []
 
         for x in range(grid_size-1):
@@ -40,18 +33,28 @@ class ProceduralGround(Textured):
                 index_list.extend((x + z*grid_size, (x+1) + z * grid_size, (x+1) + (z+1) * grid_size))
 
         index = np.array(index_list, dtype=np.int32)
+
+        # displacement map 4x the size of the vertex grid for better normals
+        displacement = generate_perlin_noise_2d((grid_size*4, grid_size*4), (5, 5)).astype(np.float32) * amplitude
+        normals = displacement_to_normal_map(displacement, scale=4)
+
+        fig, axs = plt.subplots(1, 2, dpi=200)
+        axs[0].imshow(displacement, cmap="gray")
+        axs[1].imshow(normals)
+        plt.show()
         
         mesh = Mesh(shader, attributes={
             "position": grid,
-            "normal": normals,
             "tex_coord": tex_coords
         }, index=index)
 
-        texture = Texture(tex_file, self.wrap, *self.filter)
+        diffuse_map = Texture(tex_file, GL.GL_REPEAT, GL.GL_NEAREST, GL.GL_NEAREST)
+        displacement_map = Texture(displacement, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, 
+            internal_format=GL.GL_R32F, format=GL.GL_RED, data_type=GL.GL_FLOAT)
+        normal_map = Texture(normals, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR,
+            internal_format=GL.GL_RGB, format=GL.GL_RGB, data_type=GL.GL_UNSIGNED_BYTE)
 
-        super().__init__(mesh, diffuse_map=texture)
-
+        super().__init__(mesh, diffuse_map=diffuse_map, displacement_map=displacement_map, normal_map=normal_map)
 
 if __name__ == "__main__":
-    plt.matshow(perlin_grid_2d(100, 100, 10))
-    plt.show()
+    pass

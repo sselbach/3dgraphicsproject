@@ -1,7 +1,8 @@
 #version 330 core
 
 uniform sampler2D diffuse_map;
-uniform sampler2D flower_overlay;
+uniform sampler2D displacement_map;
+uniform sampler2D normal_map;
 in vec2 frag_tex_coords;
 
 uniform mat4 view;
@@ -9,18 +10,17 @@ in vec3 w_position, w_normal;
 
 uniform vec3 w_camera_position;
 
+uniform float timer;
+
 out vec4 out_color;
 
 void main() {
-    vec4 texel_diffuse = texture(diffuse_map, frag_tex_coords);
-    vec4 texel_overlay = texture(flower_overlay, frag_tex_coords);
-
-    vec3 texel = (texel_overlay.w > 0) ? texel_overlay.xyz : texel_diffuse.xyz;
+    vec3 texel_diffuse = texture(diffuse_map, frag_tex_coords).xyz;
     
-    vec3 k_d = texel;
-    vec3 k_a = texel * 0.75;
-    vec3 k_s = vec3(1, 0.7, 0);
-    vec3 light_dir = normalize(w_camera_position + vec3(0, 0, 0));
+    vec3 k_d = texel_diffuse;
+    vec3 k_a = texel_diffuse * 0.25;
+    vec3 k_s = vec3(0.1);
+    vec3 light_dir = normalize(vec3(cos(timer), sin(timer), 1));
 
     float s = 100;
     //vec3 light_dir = normalize(vec3(1, 1, 1));
@@ -42,7 +42,5 @@ void main() {
     vec3 spec = k_s * max(0, pow(dot(r, v), s));
     
     out_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
-    //out_color = vec4(spec, 1);
-
-    //out_color = vec4(w_position, 1);
+    //out_color = texture(normal_map, frag_tex_coords);
 }

@@ -1,32 +1,52 @@
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 from PIL import Image               # load texture maps
+import numpy as np
 
 
 # -------------- OpenGL Texture Wrapper ---------------------------------------
 class Texture:
-    """ Helper class to create and automatically destroy textures """
+    """ Helper class to create and automatically destroy textures
+        Modified to allow loading Texture from numpy array,
+        as well as textures of any internal format (e.g. single-channel textures)
+    """
     def __init__(self, tex_file, wrap_mode=GL.GL_REPEAT,
                  mag_filter=GL.GL_LINEAR, min_filter=GL.GL_LINEAR_MIPMAP_LINEAR,
-                 tex_type=GL.GL_TEXTURE_2D):
+                 tex_type=GL.GL_TEXTURE_2D, internal_format=GL.GL_RGBA, format=GL.GL_RGBA,
+                 data_type=GL.GL_UNSIGNED_BYTE):
         self.glid = GL.glGenTextures(1)
         self.type = tex_type
-        try:
-            # imports image as a numpy array in exactly right format
-            tex = Image.open(tex_file).convert('RGBA')
-            GL.glBindTexture(tex_type, self.glid)
-            GL.glTexImage2D(tex_type, 0, GL.GL_RGBA, tex.width, tex.height,
-                            0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, tex.tobytes())
-            GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_S, wrap_mode)
-            GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_T, wrap_mode)
-            GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MIN_FILTER, min_filter)
-            GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MAG_FILTER, mag_filter)
-            GL.glGenerateMipmap(tex_type)
-            print(f'Loaded texture {tex_file} ({tex.width}x{tex.height}'
-                  f' wrap={str(wrap_mode).split()[0]}'
-                  f' min={str(min_filter).split()[0]}'
-                  f' mag={str(mag_filter).split()[0]})')
-        except FileNotFoundError:
-            print("ERROR: unable to load texture file %s" % tex_file)
+
+        if type(tex_file) is np.ndarray:
+            tex_bytes = tex_file.tobytes()
+            tex_string = str(type(tex_file))
+
+            height, width = tex_file.shape[:2]
+
+            print(len(tex_bytes))
+
+        else:
+            try:
+                # imports image as a numpy array in exactly right format
+                tex = Image.open(tex_file).convert('RGBA')
+                tex_bytes = tex.tobytes()
+                tex_string = tex_file
+
+                width, height = tex.width, tex.height
+            except FileNotFoundError:
+                print("ERROR: unable to load texture file %s" % tex_file)
+
+        GL.glBindTexture(tex_type, self.glid)
+        GL.glTexImage2D(tex_type, 0, internal_format, width, height,
+                        0, format, data_type, tex_bytes)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_S, wrap_mode)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_T, wrap_mode)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MIN_FILTER, min_filter)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MAG_FILTER, mag_filter)
+        GL.glGenerateMipmap(tex_type)
+        print(f'Loaded texture {tex_string} ({width}x{height}'
+                f' wrap={str(wrap_mode).split()[0]}'
+                f' min={str(min_filter).split()[0]}'
+                f' mag={str(mag_filter).split()[0]})')
 
     def __del__(self):  # delete GL texture from GPU when object dies
         GL.glDeleteTextures(self.glid)
