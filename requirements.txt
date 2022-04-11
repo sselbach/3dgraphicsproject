@@ -1,0 +1,5 @@
+PyOpenGL
+PyOpenGL-accelerate
+scikit-image
+numpy
+git+https://github.com/pvigier/perlin-numpy
