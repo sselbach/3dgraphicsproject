@@ -7,7 +7,7 @@ import numpy as np                  # all matrix manipulations & OpenGL args
 from core import Shader, Viewer, Mesh, Node, load
 from texture import Texture, Textured
 from transform import Trackball, translate
-from procedural import ProceduralGroundGPU
+from procedural import TexturedPlane, ProceduralGroundGPU
 
 
 class Axis(Mesh):
@@ -16,6 +16,8 @@ class Axis(Mesh):
         pos = ((0, 0, 0), (length, 0, 0), (0, 0, 0), (0, length, 0), (0, 0, 0), (0, 0, length))
         col = ((1, 0, 0), (1, 0, 0), (0, 1, 0), (0, 1, 0), (0, 0, 1), (0, 0, 1))
         super().__init__(shader, attributes=dict(position=pos, color=col))
+
+        GL.glClearColor(0.8, 0.8, 0.8, 1)
 
     def draw(self, primitives=GL.GL_LINES, **uniforms):
         super().draw(primitives=primitives, **uniforms)
@@ -37,10 +39,14 @@ def main():
     shader = Shader("texture.vert", "texture.frag")
     shader_axes = Shader("axes.vert", "axes.frag")
 
-    ground = ProceduralGroundGPU(shader, "grass.png", grid_size=100, amplitude=10)
-    ground_node = Node(children=[ground], transform=translate(z=-10))
+    ground = ProceduralGroundGPU(shader, "grass.png", grid_size=500, perlin_size=(20, 20), amplitude=20)
+    ground_node = Node([ground], transform=translate(z=-10))
+
+    water = TexturedPlane(shader, "water 0342.jpg", normal_file="water 0342normal.jpg", size=500)
+    water_node = Node([water], transform=translate(z=-13))
 
     viewer.add(ground_node)
+    viewer.add(water_node)
     viewer.add(Axis(shader_axes, length=10))
     
     # start rendering loop
