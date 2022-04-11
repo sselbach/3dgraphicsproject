@@ -9,8 +9,11 @@ uniform vec3 w_camera_position;
 uniform float timer;
 uniform int use_normal_map;
 
-in vec3 w_position, w_normal;
+in vec3 w_position, w_normal, w_tangent, w_bitangent;
 in vec2 frag_tex_coords;
+in vec2 frag_map_coords;
+
+in mat3 TBN;
 
 out vec4 out_color;
 
@@ -29,7 +32,9 @@ void main() {
     float s = 100;
     //vec3 light_dir = normalize(vec3(1, 1, 1));
 
-    vec3 n = normalize(w_normal);
+    //vec3 n = normalize(w_normal);
+    vec3 n = 2 * texture(normal_map, frag_map_coords).xyz - 1;
+    n = normalize(TBN * n);
 
     // reflected light vector
     vec3 r = reflect(light_dir, n);
@@ -52,5 +57,6 @@ void main() {
     out_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
 
     out_color = mix(out_color, fog_color, fog_factor);
-    //out_color = texture(normal_map, frag_tex_coords);
+    //out_color = 2 * texture(normal_map, frag_map_coords) - 1;
+    // out_color = vec4(n, 1);
 }
