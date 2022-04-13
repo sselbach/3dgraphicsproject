@@ -211,14 +211,18 @@ def load(file, shader, tex_file=None, **params):
 
     # ----- Pre-load textures; embedded textures not supported at the moment
     path = os.path.dirname(file) if os.path.dirname(file) != '' else './'
+
     for mat in scene.mMaterials:
+
         if not tex_file and 'TEXTURE_BASE' in mat.properties:  # texture token
+
             name = mat.properties['TEXTURE_BASE'].split('/')[-1].split('\\')[-1]
             # search texture in file's whole subdir since path often screwed up
             paths = os.walk(path, followlinks=True)
             file = next((os.path.join(d, f) for d, _, n in paths for f in n
                      if name.startswith(f) or f.startswith(name)), None)
             assert file, 'Cannot find texture %s in %s subtree' % (name, path)
+
         if Texture is not None and file:
             mat.properties['diffuse_map'] = Texture(tex_file=file)
 
@@ -229,8 +233,10 @@ def load(file, shader, tex_file=None, **params):
 
     # load first animation in scene file (could be a loop over all animations)
     transform_keyframes = {}
+
     if scene.HasAnimations:
         anim = scene.mAnimations[0]
+        
         for channel in anim.mChannels:
             # for each animation bone, store TRS dict with {times: transforms}
             transform_keyframes[channel.mNodeName] = (
