@@ -1,13 +1,16 @@
 #version 330 core
 
 uniform sampler2D diffuse_map;
-uniform sampler2D displacement_map;
 uniform sampler2D normal_map;
+uniform sampler2D specular_map;
+
+uniform samplerCube environment_map;
 
 uniform mat4 view;
 uniform vec3 w_camera_position;
 uniform float timer;
 uniform int use_normal_map;
+uniform float reflectiveness;
 
 in vec3 w_position, w_normal, w_tangent, w_bitangent;
 in vec2 frag_tex_coords;
@@ -39,24 +42,25 @@ void main() {
     // reflected light vector
     vec3 r = reflect(light_dir, n);
 
-    // view direction
-    // Why do the first two methods result in flickering?
-    // Why can we use a constant view direction?
-
     vec3 v = normalize(w_position - w_camera_position);
-    //vec3 v = normalize((view * vec4(w_position, 1)).xyz);
-    //vec3 v = normalize((view * vec4(1, 0, 0, 1)).xyz);
 
     vec3 spec = k_s * max(0, pow(dot(r, v), s));
+
+    vec4 phong_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
 
     float distance_to_camera = distance(w_position, w_camera_position);
     float fog_factor = exponentialFog(distance_to_camera, 0.0035);
 
     vec4 fog_color = vec4(0.8, 0.8, 0.8, 1);
-    
-    out_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
+
+    vec3 reflected = reflect(v, n);
+    vec4 reflection_color = vec4(texture(environment_map, reflected.xzy).rgb, 1);
+
+    float actual_reflectiveness = reflectiveness * texture(specular_map, frag_map_coords).r;
+
+    //out_color = 2 * texture(normal_map, frag_map_coords) - 1;
+    //out_color = vec4(n, 1);
+    out_color = mix(phong_color, reflection_color, reflectiveness);
 
     out_color = mix(out_color, fog_color, fog_factor);
-    //out_color = 2 * texture(normal_map, frag_map_coords) - 1;
-    // out_color = vec4(n, 1);
 }

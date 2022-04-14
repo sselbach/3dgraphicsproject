@@ -22,8 +22,6 @@ class Texture:
 
             height, width = tex_file.shape[:2]
 
-            print(len(tex_bytes))
-
         else:
             try:
                 # imports image as a numpy array in exactly right format
@@ -49,6 +47,41 @@ class Texture:
                 f' mag={str(mag_filter).split()[0]})')
 
     def __del__(self):  # delete GL texture from GPU when object dies
+        GL.glDeleteTextures(self.glid)
+
+
+class CubeMap:
+    def __init__(self, cube):
+        """ cube should be tuple of np.ndarray (dtype=np.uint8) like
+            (right, left, top, bottom, back, front)
+        """
+        self.glid = GL.glGenTextures(1)
+        tex_type = GL.GL_TEXTURE_CUBE_MAP
+        self.type = tex_type
+
+        GL.glBindTexture(tex_type, self.glid)
+
+        for i, face in enumerate(cube):
+            width, height = face.shape[:2]
+            GL.glTexImage2D(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL.GL_RGB, width, height, 0,
+                GL.GL_RGB, GL.GL_UNSIGNED_BYTE, face.tobytes())
+
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(tex_type, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+
+        print("loaded a cubemap :)")
+
+    def bind(self):
+        """ Method to globally bind texture to the shaders
+        """
+        GL.glActiveTexture(GL.GL_TEXTURE20)
+        GL.glBindTexture(self.type, self.glid)
+
+
+    def __del__(self):
         GL.glDeleteTextures(self.glid)
 
 

@@ -363,6 +363,11 @@ class Viewer(Node):
         # cyclic iterator to easily toggle polygon rendering modes
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
+
+    def set_environment(self, environment):
+        self.environment = environment
+        
+
     def run(self):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
@@ -374,11 +379,17 @@ class Viewer(Node):
             # draw our scene objects
             cam_pos = np.linalg.inv(self.trackball.view_matrix())[:, 3]
 
-            self.draw(view=self.trackball.view_matrix(),
-                      projection=self.trackball.projection_matrix(win_size),
-                      model=identity(),
-                      w_camera_position=cam_pos,
-                      timer=glfw.get_time())
+            self.environment.bind()
+
+            self.draw(
+                view=self.trackball.view_matrix(),
+                rotation=self.trackball.matrix(),
+                projection=self.trackball.projection_matrix(win_size),
+                model=identity(),
+                w_camera_position=cam_pos,
+                timer=glfw.get_time(),
+                environment_map=20
+            )
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
