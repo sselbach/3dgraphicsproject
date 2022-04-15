@@ -1,3 +1,5 @@
+""" taken from our solution to TP6, with the addition of the Skinned class from TP7 """
+
 # Python built-in modules
 from bisect import bisect, bisect_left      # search sorted keyframe lists
 

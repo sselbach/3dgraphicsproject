@@ -1,3 +1,5 @@
+""" Taken from the TPs, but with additions/modifications """
+
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 from PIL import Image               # load texture maps
 import numpy as np
@@ -46,6 +48,7 @@ class Texture:
                 f' min={str(min_filter).split()[0]}'
                 f' mag={str(mag_filter).split()[0]})')
 
+    # added the ability to manually bind the texture to a texture unit
     def bind(self, texture_unit):
         GL.glActiveTexture(texture_unit)
         GL.glBindTexture(self.type, self.glid)
@@ -55,6 +58,7 @@ class Texture:
 
 
 class CubeMap:
+    """ Similar to Texture, but for a cube map """
     def __init__(self, cube):
         """ cube should be tuple of np.ndarray (dtype=np.uint8) like
             (right, left, top, bottom, back, front)
@@ -78,10 +82,10 @@ class CubeMap:
 
         print("loaded a cubemap :)")
 
-    def bind(self):
-        """ Method to globally bind texture to the shaders
+    def bind(self, texture_unit):
+        """ Method to manually bind texture to the shaders
         """
-        GL.glActiveTexture(GL.GL_TEXTURE20)
+        GL.glActiveTexture(texture_unit)
         GL.glBindTexture(self.type, self.glid)
 
 

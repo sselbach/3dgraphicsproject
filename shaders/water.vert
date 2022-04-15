@@ -1,3 +1,6 @@
+// water vertex shader: applies z displacement according to wave function
+// normals are calculated in the fragment shader
+
 #version 330 core
 
 uniform float amplitude;

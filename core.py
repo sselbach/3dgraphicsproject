@@ -1,3 +1,5 @@
+""" Taken from the TPs, with minor modifications to the Viewer class """
+
 # Python built-in modules
 import os                           # os function, i.e. checking file status
 from itertools import cycle         # allows easy circular choice list
@@ -321,7 +323,10 @@ def load(file, shader, tex_file=None, **params):
 
 # ------------  Viewer class & window management ------------------------------
 class Viewer(Node):
-    """ GLFW viewer window, with classic initialization & graphics loop """
+    """ GLFW viewer window, with classic initialization & graphics loop
+        modified to enable blending for transparency, pass some more uniforms to all shaders,
+        and bind the environment cube map to all shaders
+    """
 
     def __init__(self, width=640, height=480, trackball=None):
         super().__init__()
@@ -383,9 +388,10 @@ class Viewer(Node):
             # draw our scene objects
             cam_pos = np.linalg.inv(self.trackball.view_matrix())[:, 3]
 
-            # TODO: add comments
-            self.environment.bind()
+            # bind environment cube map
+            self.environment.bind(GL.GL_TEXTURE20)
 
+            # added some uniforms like timer and rotation matrix
             self.draw(
                 view=self.trackball.view_matrix(),
                 rotation=self.trackball.matrix(),

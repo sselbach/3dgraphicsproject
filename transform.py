@@ -1,3 +1,6 @@
+# taken from the TPs with one single modification:
+# z clipping range of the trackball has been increased
+
 # pylint: disable=invalid-name, bad-whitespace, too-many-arguments
 """
 Basic graphics related geometry tools to complement numpy
