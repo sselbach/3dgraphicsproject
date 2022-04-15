@@ -15,15 +15,7 @@ class ProceduralWaterGPU(Textured):
         zz = np.zeros(xx.shape, dtype=np.float32)
 
         vertices = np.stack([xx, yy, zz]).reshape(3, -1).T
-
-        normals = np.zeros(vertices.shape, dtype=np.float32)
-        normals[:, 2] = 1
-
-        tangents = np.zeros(vertices.shape, dtype=np.float32)
-        tangents[:, 0] = 1
-
-        tex_coords = vertices[:, (0, 1)]
-
+        
         index_list = []
 
         for x in range(n_vertices - 1):
@@ -34,11 +26,7 @@ class ProceduralWaterGPU(Textured):
         index = np.array(index_list, dtype=np.int32)
 
         mesh = Mesh(shader,{
-            "position": vertices,
-            "normal": normals,
-            "tangent": tangents,
-            "tex_coord": tex_coords,
-            "map_coord": tex_coords
+            "position": vertices
         }, uniforms={"amplitude": amplitude}, index=index)
 
         super().__init__(mesh)

@@ -383,6 +383,7 @@ class Viewer(Node):
             # draw our scene objects
             cam_pos = np.linalg.inv(self.trackball.view_matrix())[:, 3]
 
+            # TODO: add comments
             self.environment.bind()
 
             self.draw(
