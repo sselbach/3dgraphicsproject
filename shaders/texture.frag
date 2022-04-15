@@ -11,6 +11,8 @@ uniform vec3 w_camera_position;
 uniform float timer;
 uniform int use_normal_map;
 uniform float reflectiveness;
+uniform vec3 k_s;
+uniform float s;
 
 in vec3 w_position, w_normal, w_tangent, w_bitangent;
 in vec2 frag_tex_coords;
@@ -29,11 +31,10 @@ void main() {
     
     vec3 k_d = texel_diffuse;
     vec3 k_a = texel_diffuse * 0.25;
-    vec3 k_s = vec3(0);
-    vec3 light_dir = normalize(vec3(cos(timer), sin(timer), 1));
 
-    float s = 100;
-    //vec3 light_dir = normalize(vec3(1, 1, 1));
+    vec3 light_dir = normalize(vec3(cos(timer), sin(timer), 1));
+    //vec3 light_dir = normalize(vec3(0, -1, 0.6));
+
 
     //vec3 n = normalize(w_normal);
     vec3 n = 2 * texture(normal_map, frag_map_coords).xyz - 1;
@@ -44,7 +45,7 @@ void main() {
 
     vec3 v = normalize(w_position - w_camera_position);
 
-    vec3 spec = k_s * max(0, pow(dot(r, v), s));
+    vec3 spec = k_s * max(0, pow(dot(r, -v), s));
 
     vec4 phong_color = vec4(k_a + k_d * max(0, dot(n, light_dir)) + spec, 1);
 
@@ -60,7 +61,7 @@ void main() {
 
     //out_color = 2 * texture(normal_map, frag_map_coords) - 1;
     //out_color = vec4(n, 1);
-    out_color = mix(phong_color, reflection_color, reflectiveness);
+    out_color = mix(phong_color, reflection_color, actual_reflectiveness);
 
     out_color = mix(out_color, fog_color, fog_factor);
 }

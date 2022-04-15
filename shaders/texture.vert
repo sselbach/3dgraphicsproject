@@ -28,7 +28,8 @@ void main() {
     frag_tex_coords = tex_coord;
     frag_map_coords = map_coord;
 
-    w_position = position;
+    vec4 w_position4 = view * model * vec4(position, 1);
+    w_position = vec3(w_position4) / w_position4.w;
 
     w_normal = (transpose(inverse(mat3(model)))) * normal;
     w_tangent = mat3(model) * tangent;

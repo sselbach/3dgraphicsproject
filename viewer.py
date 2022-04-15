@@ -5,11 +5,11 @@ import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 from core import Shader, Viewer, Mesh, Node, load
-from texture import Texture, Textured, CubeMap
-from transform import Trackball, translate
-from procedural import TexturedPlane, ProceduralGroundGPU, Bridge
+from texture import CubeMap
+from transform import Trackball, translate, rotate, scale
+from procedural import ProceduralGroundGPU, ProceduralWaterGPU
 from utils import load_cubemap_from_directory
-from primitives import InvertedCube
+from primitives import InvertedCube, Bridge
 
 
 class Axis(Mesh):
@@ -46,14 +46,16 @@ def main():
     environment = CubeMap(load_cubemap_from_directory("textures/interstellar", format="tga", correct_rotation=False))
     viewer.set_environment(environment)
 
-    shader = Shader("texture.vert", "texture.frag")
-    shader_axes = Shader("axes.vert", "axes.frag")
-    shader_skybox = Shader("skybox.vert", "skybox.frag")
+    shader = Shader("shaders/texture.vert", "shaders/texture.frag")
+    shader_axes = Shader("shaders/axes.vert", "shaders/axes.frag")
+    shader_skybox = Shader("shaders/skybox.vert", "shaders/skybox.frag")
+    shader_water = Shader("shaders/water.vert", "shaders/water.frag")
 
     ground = ProceduralGroundGPU(shader, "grass.png", grid_size=512, perlin_size=(16, 16), amplitude=20)
     ground_node = Node([ground], transform=translate(z=-20))
 
-    water = TexturedPlane(shader, "water 0342.jpg", normal_file="textures/lava_normal.jpg", shape=(500, 500))
+    #water = TexturedPlane(shader, "water 0342.jpg", normal_file="textures/lava_normal.jpg", shape=(500, 500))
+    water = ProceduralWaterGPU(shader_water, 500, 500, amplitude=0.5)
     water_node = Node([water], transform=translate(z=-3))
 
     ground_node.add(water_node)
@@ -61,12 +63,19 @@ def main():
     bridge = Bridge(shader, "textures/bridge/diffuse.jpg", "textures/bridge/normal.jpg", "textures/bridge/specular.jpg")
     bridge_node = Node([bridge])
 
+    spider = load("assets/FantasyCharacters/Spider/Spider_Idle.fbx", shader)
+    spider[0].children[0].children[0].drawable.uniforms["reflectiveness"] = 0
+    spider[0].children[0].children[0].drawable.uniforms["s"] = 100
+    spider_node = Node(spider, transform=translate(z=0.1) @ scale(0.025) @ rotate((0, 0, 1), 90) @ rotate((1, 0, 0), 90))
+
     skybox = InvertedCube(shader_skybox)
 
     viewer.add(skybox)
 
     viewer.add(ground_node)
     viewer.add(bridge_node)
+    viewer.add(spider_node)
+
     viewer.add(Axis(shader_axes, length=10))
     
     # start rendering loop

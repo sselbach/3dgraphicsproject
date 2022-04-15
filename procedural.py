@@ -7,117 +7,41 @@ from texture import Textured, Texture, CubeMap
 from core import Mesh
 from utils import displacement_to_normal_map
 
-class TexturedPlane(Textured):
-    def __init__(self, shader, tex_file, normal_file=None, shape=(100, 100)):
-        size_x, size_y = shape
+class ProceduralWaterGPU(Textured):
+    def __init__(self, shader, size, n_vertices, amplitude=1):
+        arange = np.arange(0, n_vertices, dtype=np.float32) * size/n_vertices - size/2
 
-        vertices = np.array([(-0.5, -0.5, 0), (0.5, -0.5, 0), (0.5, 0.5, 0), (-0.5, 0.5, 0)], dtype=np.float32)
-        vertices[:, 0] *= size_x
-        vertices[:, 1] *= size_y
+        xx, yy = np.meshgrid(arange, arange)
+        zz = np.zeros(xx.shape, dtype=np.float32)
 
-        normals = np.array([(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)], dtype=np.float32)
-        tangents = np.array([(1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)], dtype=np.float32)
+        vertices = np.stack([xx, yy, zz]).reshape(3, -1).T
 
-        tex_coords = np.array([(0, 0), (1, 0), (0, 1), (1, 1)], dtype=np.float32)
-        tex_coords *= size_x / 20
+        normals = np.zeros(vertices.shape, dtype=np.float32)
+        normals[:, 2] = 1
 
-        indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
+        tangents = np.zeros(vertices.shape, dtype=np.float32)
+        tangents[:, 0] = 1
 
-        mesh = Mesh(shader, {
+        tex_coords = vertices[:, (0, 1)]
+
+        index_list = []
+
+        for x in range(n_vertices - 1):
+            for z in range(n_vertices - 1):
+                index_list.extend((x + z*n_vertices, (x+1) + (z+1) * n_vertices, x + (z+1) * n_vertices))
+                index_list.extend((x + z*n_vertices, (x+1) + z * n_vertices, (x+1) + (z+1) * n_vertices))
+
+        index = np.array(index_list, dtype=np.int32)
+
+        mesh = Mesh(shader,{
             "position": vertices,
-            "tex_coord": tex_coords,
-            "map_coord": tex_coords.copy(),
             "normal": normals,
-            "tangent": tangents
-        }, uniforms={"use_normal_map": 1, "reflectiveness": 0.5}, index=indices)
-
-        diffuse_map = Texture(tex_file)
-
-        if not normal_file:
-            normal_map = Texture(np.array([127, 127, 255], np.uint8).reshape((1, 1, 3)))
-
-        else:
-            normal_map = Texture(normal_file)
-
-        super().__init__(mesh, diffuse_map=diffuse_map, normal_map=normal_map)
-
-
-class Bridge(Textured):
-    def __init__(self, shader, diffuse_map, normal_map, specular_map):
-        A = (-1, -1, -1)
-        B = (1, -1, -1)
-        C = (1, -1, 1)
-        D = (-1, -1, 1)
-        E = (-1, 1, -1)
-        F = (1, 1, -1)
-        G = (1, 1, 1)
-        H = (-1, 1, 1)
-
-        x = np.array((1, 0, 0))
-        y = np.array((0, 1, 0))
-        z = np.array((0, 0, 1))
-        
-        vertices = np.array([
-            A, B, C, D,     # front
-            B, F, G, C,     # right
-            F, E, H, G,     # back
-            E, A, D, H,     # left
-            C, G, H, D,     # top
-            E, F, B, A      # bottom
-        ], np.float32)
-
-        vertices = vertices * (500, 2, 0.1)
-
-        normals = np.array([
-            -y, -y, -y, -y,
-            x, x, x, x,
-            y, y, y, y,
-            -x, -x, -x, -x,
-            z, z, z, z,
-            -z, -z, -z, -z
-        ], np.float32)
-
-        tangents = np.array([
-            z, z, z, z,
-            z, z, z, z,
-            z, z, z, z,
-            z, z, z, z,
-            x, x, x, x,
-            -x, -x, -x, -x
-        ], np.float32)
-
-        tex_coords = np.array([
-            vertices[0:4, (0, 2)],
-            vertices[4:8, (1, 2)],
-            vertices[8:12, (0, 2)],
-            vertices[12:16, (1, 2)],
-            vertices[16:20, (0, 1)],
-            vertices[20:24, (0, 1)]
-        ], np.float32).reshape(24, 2)
-        tex_coords /= 5
-
-        index = np.array([
-            0, 1, 2, 0, 2, 3,
-            4, 5, 6, 4, 6, 7,
-            8, 9, 10, 8, 10, 11,
-            12, 13, 14, 12, 14, 15,
-            16, 17, 18, 16, 18, 19,
-            20, 21, 22, 20, 22, 23
-        ], np.uint32)
-
-        mesh = Mesh(shader, {
-            "position": vertices,
+            "tangent": tangents,
             "tex_coord": tex_coords,
-            "map_coord": tex_coords,
-            "normal": normals,
-            "tangent": tangents
-        }, uniforms={"apply_displacement": 0, "reflectiveness": 1}, index=index)
+            "map_coord": tex_coords
+        }, uniforms={"amplitude": amplitude}, index=index)
 
-        diffuse_map = Texture(diffuse_map)
-        normal_map = Texture(normal_map)
-        specular_map = Texture(specular_map)
-
-        super().__init__(mesh, diffuse_map=diffuse_map, normal_map=normal_map, specular_map=specular_map)
+        super().__init__(mesh)
 
 
 class ProceduralGroundGPU(Textured):
@@ -129,7 +53,7 @@ class ProceduralGroundGPU(Textured):
 
         zz = np.zeros(xx.shape)
 
-        grid = np.stack((xx, yy, zz)).reshape(3, grid_size**2).T
+        grid = np.stack((xx, yy, zz)).reshape(3, -1).T
         grid = grid.astype(np.float32)
 
         normals = np.zeros(grid.shape, dtype=np.float32)
@@ -169,7 +93,7 @@ class ProceduralGroundGPU(Textured):
             "map_coord": map_coords,
             "normal": normals,
             "tangent": tangents
-        }, uniforms={"apply_displacement": 1, "reflectiveness": 0}, index=index)
+        }, uniforms={"apply_displacement": 1, "reflectiveness": 0, "k_s": (0, 0, 0)}, index=index)
 
         diffuse_map = Texture(tex_file, GL.GL_REPEAT, GL.GL_NEAREST, GL.GL_NEAREST)
         displacement_map = Texture(displacement_map, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, 
