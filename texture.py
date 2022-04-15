@@ -46,6 +46,10 @@ class Texture:
                 f' min={str(min_filter).split()[0]}'
                 f' mag={str(mag_filter).split()[0]})')
 
+    def bind(self, texture_unit):
+        GL.glActiveTexture(texture_unit)
+        GL.glBindTexture(self.type, self.glid)
+
     def __del__(self):  # delete GL texture from GPU when object dies
         GL.glDeleteTextures(self.glid)
 

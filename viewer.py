@@ -5,7 +5,7 @@ import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 from core import Shader, Viewer, Mesh, Node, load
-from texture import CubeMap
+from texture import CubeMap, Texture
 from transform import Trackball, translate, rotate, scale
 from procedural import ProceduralGroundGPU, ProceduralWaterGPU
 from utils import load_cubemap_from_directory
@@ -35,7 +35,7 @@ class FixedCameraViewer(Viewer):
 def main():
     """ create a window, add scene objects, then run rendering loop """
 
-    trackball = Trackball(pitch=0, roll=88, yaw=90, distance=75)
+    trackball = Trackball(pitch=0, roll=75, yaw=90, distance=10)
 
     red = np.array([255, 0, 0], dtype=np.uint8).reshape(1, 1, 3)
     blue = np.array([0, 0, 255], dtype=np.uint8).reshape(1, 1, 3)
@@ -63,9 +63,19 @@ def main():
     bridge = Bridge(shader, "textures/bridge/diffuse.jpg", "textures/bridge/normal.jpg", "textures/bridge/specular.jpg")
     bridge_node = Node([bridge])
 
-    spider = load("assets/FantasyCharacters/Spider/Spider_Idle.fbx", shader)
-    spider[0].children[0].children[0].drawable.uniforms["reflectiveness"] = 0
-    spider[0].children[0].children[0].drawable.uniforms["s"] = 100
+    spider_spec_map = Texture("assets/FantasyCharacters/Spider/texture/Spider_specular.png")
+    spider_spec_map.bind(GL.GL_TEXTURE21)
+
+    spider = load("assets/FantasyCharacters/Spider/Spider_run.fbx", shader)
+
+    spider[0].children[0].children[0].mesh.textures["specular_map"] = spider_spec_map
+
+    spider[0].children[0].children[0].mesh.drawable.uniforms["reflectiveness"] = 1
+    spider[0].children[0].children[0].mesh.drawable.uniforms["s"] = 100
+    spider[0].children[0].children[0].mesh.drawable.uniforms["k_s"] = (0.8, 1, 0.8)
+    spider[0].children[0].children[0].mesh.drawable.uniforms["apply_skinning"] = 1
+    spider[0].children[0].children[0].mesh.drawable.uniforms["apply_displacement"] = 0
+    spider[0].children[0].children[0].mesh.drawable.uniforms["use_separate_map_coords"] = 0
     spider_node = Node(spider, transform=translate(z=0.1) @ scale(0.025) @ rotate((0, 0, 1), 90) @ rotate((1, 0, 0), 90))
 
     skybox = InvertedCube(shader_skybox)

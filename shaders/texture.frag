@@ -9,7 +9,6 @@ uniform samplerCube environment_map;
 uniform mat4 view;
 uniform vec3 w_camera_position;
 uniform float timer;
-uniform int use_normal_map;
 uniform float reflectiveness;
 uniform vec3 k_s;
 uniform float s;
@@ -52,7 +51,7 @@ void main() {
     float distance_to_camera = distance(w_position, w_camera_position);
     float fog_factor = exponentialFog(distance_to_camera, 0.0035);
 
-    vec4 fog_color = vec4(0.8, 0.8, 0.8, 1);
+    vec4 fog_color = vec4(0.8, 1, 0.8, 1);
 
     vec3 reflected = reflect(v, n);
     vec4 reflection_color = vec4(texture(environment_map, reflected.xzy).rgb, 1);

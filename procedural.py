@@ -93,7 +93,13 @@ class ProceduralGroundGPU(Textured):
             "map_coord": map_coords,
             "normal": normals,
             "tangent": tangents
-        }, uniforms={"apply_displacement": 1, "reflectiveness": 0, "k_s": (0, 0, 0)}, index=index)
+        }, uniforms={
+            "apply_displacement": 1, 
+            "reflectiveness": 0, 
+            "k_s": (0, 0, 0), 
+            "apply_skinning": 0,
+            "use_separate_map_coords": 1
+        }, index=index)
 
         diffuse_map = Texture(tex_file, GL.GL_REPEAT, GL.GL_NEAREST, GL.GL_NEAREST)
         displacement_map = Texture(displacement_map, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, 
