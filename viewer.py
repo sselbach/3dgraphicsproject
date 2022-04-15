@@ -66,7 +66,7 @@ def main():
     spider_spec_map = Texture("assets/FantasyCharacters/Spider/texture/Spider_specular.png")
     spider_spec_map.bind(GL.GL_TEXTURE21)
 
-    spider = load("assets/FantasyCharacters/Spider/Spider_run.fbx", shader)
+    spider = load("assets/FantasyCharacters/Spider/Spider_Idle.fbx", shader)
 
     spider[0].children[0].children[0].mesh.textures["specular_map"] = spider_spec_map
 
@@ -76,7 +76,7 @@ def main():
     spider[0].children[0].children[0].mesh.drawable.uniforms["apply_skinning"] = 1
     spider[0].children[0].children[0].mesh.drawable.uniforms["apply_displacement"] = 0
     spider[0].children[0].children[0].mesh.drawable.uniforms["use_separate_map_coords"] = 0
-    spider_node = Node(spider, transform=translate(z=0.1) @ scale(0.025) @ rotate((0, 0, 1), 90) @ rotate((1, 0, 0), 90))
+    spider_node = Node(spider, transform=translate(z=0.1) @ scale(0.025) @ rotate((0, 0, 1), -90) @ rotate((1, 0, 0), 90))
 
     skybox = InvertedCube(shader_skybox)
 
@@ -86,7 +86,7 @@ def main():
     viewer.add(bridge_node)
     viewer.add(spider_node)
 
-    viewer.add(Axis(shader_axes, length=10))
+    #viewer.add(Axis(shader_axes, length=10))
     
     # start rendering loop
     viewer.run()
