@@ -99,6 +99,16 @@ def main():
     viewer.add(ground_node)
 
     #viewer.add(Axis(shader_axes, length=10))
+
+    # print controls
+    print("=====================================")
+    print("Controls")
+    print("=====================================")
+    print("Left Click + Drag:   Rotate camera")
+    print("Right Click + Drag:  Pan camera")
+    print("W:                   Toggle fill mode")
+    print("Esc:                 Quit")
+    print("=====================================")
     
     # start rendering loop
     viewer.run()
