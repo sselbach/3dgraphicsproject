@@ -1,5 +1,7 @@
 PyOpenGL
 PyOpenGL-accelerate
+glfw
+assimpcy
 scikit-image
 numpy
 git+https://github.com/pvigier/perlin-numpy
